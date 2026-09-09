@@ -17,9 +17,10 @@ If you'd prefer to do it yourself without running the installer, you can simply 
 Usage: install [-hgv]
 Install wsl-gpg-systemd automatically. See README for manual instructions.
 
-  -h, --help      this help
-  -g, --gh        use GitHub CLI to fetch npiperelay, installing it first if necessary
-  -v, --verbose   show verbose output when available
+  -h, --help        Show this help dialogue.
+  -v, --verbose     Show verbose output when available.
+  -p, --privileged  Link the GnuPG agent privileged socket.
+  -g, --gh          Use GitHub CLI to fetch npiperelay, installing it first if necessary.
 ```
 
 ## How it works
@@ -30,5 +31,12 @@ gpg4win chose to use a unique "socket" approach on Windows, where the "socket" i
 gpg-agent.ssh, on the other hand, is meant to be compatible with the Windows OpenSSH server, so it uses native Windows named pipes. These are not accessible inside WSL at all, so npiperelay connects to the pipe (`//./pipe/openssh-ssh-agent`), and then relays it over STDIN/STDOUT.
 
 ## Notes
-* By default, WSL will be given access to the `gpg-agent.extra` socket as this is the recommended approach for "remote" systems. The extra socket does have a few restrictions, notably that `gpg --card-status` will not work. If you require this functionality you can simply edit `$HOME/.config/systemd/user/gpg-agent@.service` and change `S.gpg-agent.extra` to `S.gpg-agent` in the Windows path.
-* The version of npiperelay being used is from an updated version of the original npiperelay project maintained by [@albertony](https://github.com/albertony). The changes implemented to make this possible are the work of [@NZSmartie](https://github.com/NZSmartie), [@Lexicality](https://github.com/Lexicality), [@ndimiduk](https://github.com/ndimiduk), and [@SunMar](https://github.com/SunMar).
+* By default, WSL will be given access to the `S.gpg-agent.extra` socket as this is the recommended approach for "remote" systems. The extra socket does have a few restrictions, notably that `gpg --card-status` will not work. If you require this functionality you can simply use the `-p`/`--privileged` option when running the install script.
+
+## Special Thanks
+This project would not be possible without the version of npiperelay maintained by [@albertony](https://github.com/albertony).  
+The changes that enabled the required functionality were made by: 
+- [@NZSmartie](https://github.com/NZSmartie)
+- [@Lexicality](https://github.com/Lexicality)
+- [@ndimiduk](https://github.com/ndimiduk)
+- [@SunMar](https://github.com/SunMar).
