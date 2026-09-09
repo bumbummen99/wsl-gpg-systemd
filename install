@@ -9,20 +9,22 @@ usage() {
 	echo 'Usage: install [-hgv]'
 	echo 'Install wsl-gpg-systemd automatically. See README for manual instructions.'
 	echo ''
-	echo '  -h, --help      this help'
-	echo '  -g, --gh        use GitHub CLI to fetch npiperelay, installing it first if necessary'
-	echo '  -v, --verbose   show verbose output when available'
+	echo '  -h, --help        Show this help dialogue.'
+	echo '  -v, --verbose     Show verbose output when available.'
+	echo '  -p, --privileged  Link the GnuPG agent privileged socket.'
+	echo '  -g, --gh          Use GitHub CLI to fetch npiperelay, installing it first if necessary.'
 	echo ''
 	exit "$1"
 }
 
-opts=$(getopt -o 'ghv' --long 'gh,help,verbose' -n install -- "$@")
+opts=$(getopt -o 'pghv' --long 'privileged,gh,help,verbose' -n install -- "$@")
 eval set -- "$opts"
 unset opts
 
 for opt; do
 	case "$opt" in
-		-g|--gh) usegh="true";;
+		-p|--privileged) opt_privileged="true";;
+		-g|--gh) opt_gh="true";;
 		-h|--help) usage;;
 		-v|--verbose) verbose="-v";;
 		*) break;;
@@ -87,7 +89,7 @@ npr_path_tmp="${dir_tmp}/$NPRFILE"
 ######################
 printf 'Downloading %s...\n' "$NPRFILE"
 
-if [ $usegh ]; then
+if [ $opt_gh ]; then
 	# Install using GitHub CLI
 	hash gh 2>/dev/null || install_gh
 	gh release download -p "$NPRFILE" -R "$NPRREPO" -D "${dir_tmp}"
@@ -100,8 +102,14 @@ fi
 # Prepare working directory #
 #############################
 # Find windows paths to the GPG agent socket files (normal and extra)
-gpg_path_win_socket="$(gpgconf.exe --list-dirs agent-socket | fixpath)"
 gpg_path_win_socket_extra="$(gpgconf.exe --list-dirs agent-extra-socket | fixpath)"
+if [ $opt_privileged ]; then
+	# Use the actual privileged socket file
+	gpg_path_win_socket="$(gpgconf.exe --list-dirs agent-socket | fixpath)"
+else
+	# Use the unprivileged socket file
+	gpg_path_win_socket="$gpg_path_win_socket_extra"
+fi
 
 # sed rules
 sed_dir_bin="s|%dir_bin%|${dir_bin}|g"
